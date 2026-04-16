@@ -71,52 +71,6 @@ SerialCLI Log - 2026-04-15 10:30:45
 
 ---
 
-### ✅ 3. Enhanced TRACECATCH Test Sequence
-**What it does**: Improved trace extraction with configurable patterns
-
-**Old behavior**:
-- Send all commands with fixed 100ms delays  
-- Wait for responses
-- Display trace metadata
-
-**New behavior**:
-- Send command → Wait for RX
-- **Immediately** send next command when RX arrives (no delay)
-- Extract trace data using pattern matching
-- Log everything to file if enabled
-
-**Configuration Example**:
-```json
-"TRACES" : [
-    {
-        "KEY" : "[TRACE]",
-        "TRACE_CHAR" : " ",
-        "TRACE_END" : "\n"
-    }
-]
-```
-
-When device sends: `[TRACE] sensor reading\n`
-Extracted: `sensor reading`
-
-**Implementation**:
-- `dev.py`:
-  - `_extract_trace_data()` - Extract data using KEY/TRACE_CHAR/TRACE_END pattern
-  - `_execute_test_sequence()` - Improved with:
-    - Event-driven execution (no delay loop)
-    - Immediate TX feedback on RX
-    - Trace pattern display
-    - Better error messages
-
-**Improvements**:
-- 33% faster test execution (600ms → 400ms)
-- Configurable trace patterns
-- Pattern-based extraction
-- Multiple trace patterns per test
-- Better error reporting
-
----
-
 ## File Modifications
 
 ### serial_core.py ✏️
@@ -132,17 +86,6 @@ Extracted: `sensor reading`
 - `receive()` - Now logs received data
 - `read_until()` - Now logs received data
 
-### dev.py ✏️
-**Added**:
-- `_extract_trace_data()` - Pattern-based extraction
-
-**Changed**:
-- `_execute_test_sequence()` - 
-  - Event-driven instead of delay loop
-  - Trace pattern display
-  - Better error reporting
-  - Faster execution
-
 ### cli.py ✏️
 **Added**:
 - `start_monitor()` - Real-time monitor loop
@@ -154,16 +97,6 @@ Extracted: `sensor reading`
 - `show_status()` - Shows logging status
 - `process_command()` - Routes new commands
 - Help examples updated
-
-### dev.json ✏️
-**Updated**:
-- TRACECATCH SEQUENCE improved
-  - Added `\r\n` to TX commands
-  - Better RX expectations
-  - Cleaner examples
-
-**Added**:
-- Second TRACES example with different pattern
 
 ### README.md ✏️
 **Added**:
@@ -265,15 +198,6 @@ SerialCLI> connect -p COM3 -b 115200
 SerialCLI> monitor
 # Real-time data display
 # Ctrl+C to exit
-```
-
-### Log a Test Session
-```bash
-SerialCLI> logging enable logs/test.txt
-SerialCLI> dev devvy
-SerialCLI> dev --run TRACECATCH
-SerialCLI> logging disable
-# Review logs/test.txt
 ```
 
 ### Monitor + Logging Combined

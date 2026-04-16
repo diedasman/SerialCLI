@@ -17,7 +17,7 @@ SerialCLI is a modular command-line application for serial device communication.
 ┌───▼──────────────┐   ┌──────▼───────────┐
 │  Command Handler │   │  Dev Test Runner │
 │    (cli.py)      │   │   (dev.py)       │
-└────────┬─────────┘   └──────┬───────────┘
+└────────┬─────────┘   └───────┬──────────┘
          │                     │
          └────────────┬────────┘
                       │
@@ -28,7 +28,7 @@ SerialCLI is a modular command-line application for serial device communication.
                       │
          ┌────────────▼────────────┐
          │   USB Serial Device     │
-         └────────────────────────┘
+         └─────────────────────────┘
 ```
 
 ### Module Responsibilities
@@ -61,17 +61,6 @@ SerialCLI is a modular command-line application for serial device communication.
   - Configure port parameters (baud rate, data bits, etc.)
   - Provide read_until() for sequence-based communication
 
-#### dev.py - Test Framework
-- **Purpose**: JSON-driven test sequence execution
-- **Key Class**: `DevTestRunner`
-- **Responsibilities**:
-  - Load and parse `dev.json` configuration
-  - Validate developer key
-  - Execute test sequences step-by-step
-  - Validate TX/RX pairs
-  - Report test results with pass/fail status
-  - Support multiple test runs with delays
-
 ### Data Flow
 
 #### Connection Flow
@@ -89,25 +78,6 @@ USB Device: Connected
 CLI Output: "✓ Connected to COM3 at 9600 baud"
 ```
 
-#### Test Execution Flow
-```
-User: "dev --run VERIFICATION"
-         ↓
-CLI Parser: parse_dev_command()
-         ↓
-DevTestRunner.run_test()
-         ↓
-Load test from dev.json
-         ↓
-For each step in SEQUENCE:
-  - Send TX data via SerialCommunicator.send()
-  - Wait for RX via SerialCommunicator.read_until()
-  - Compare RX with expected value
-  - Record pass/fail
-         ↓
-Generate report and display results
-```
-
 ### Command Processing Pipeline
 
 1. **Input**: User types command at prompt
@@ -118,25 +88,6 @@ Generate report and display results
 6. **Output**: Results formatted and displayed
 
 ### Configuration Files
-
-#### dev.json Structure
-```json
-{
-  "DEV_KEY": "password",
-  "COMMANDS": {...},
-  "TESTS": [
-    {
-      "NAME": "TEST_NAME",
-      "DESCRIPTION": "...",
-      "SEQUENCE": [
-        {"TX": "...", "RX": "..."},
-        ...
-      ],
-      "TRACES": [...]
-    }
-  ]
-}
-```
 
 #### config.json Structure (Future Use)
 ```json
@@ -168,22 +119,19 @@ else:
 The architecture supports easy extensibility:
 
 1. **New Commands**: Add parsing methods to `SerialCLI` class
-2. **Test Types**: Extend test sequence logic in `DevTestRunner._execute_test_sequence()`
-3. **Serial Operations**: Add methods to `SerialCommunicator` class
-4. **Configurations**: Add settings processing from `config.json` and `dev.json`
+2. **Serial Operations**: Add methods to `SerialCommunicator` class
+3. **Configurations**: Add settings processing from `config.json`
 
 ### Dependencies
 
 - **pyserial**: Serial port communication
-- **Standard Library**: json, sys, argparse, pathlib, typing, time, shlex
+- **Standard Library**: sys, pathlib, typing, time, shlex
 
 ### Design Patterns Used
 
 1. **Facade Pattern**: `SerialCLI` provides simplified interface to complex subsystems
-2. **Adapter Pattern**: `DevTestRunner` adapts JSON test format to execution model
-3. **Strategy Pattern**: Different command handlers implement command processing
-4. **State Pattern**: `SerialCommunicator.is_connected` manages connection state
-5. **Template Method**: Test sequence execution follows standardized steps
+2. **Strategy Pattern**: Different command handlers implement command processing
+3. **State Pattern**: `SerialCommunicator.is_connected` manages connection state
 
 ### Performance Considerations
 
@@ -194,7 +142,6 @@ The architecture supports easy extensibility:
 
 ### Security Considerations
 
-- **Dev Key Protection**: Validated before enabling dev mode
 - **Input Validation**: Command parsing validates parameter types
 - **Exception Handling**: Try-catch blocks prevent crashes from invalid devices
 - **Error Messages**: Avoid exposing system details in errors

@@ -117,26 +117,6 @@ SerialCLI
 SerialCLI> mycommand [args]
 ```
 
-#### Adding a Test Template to dev.json
-
-1. **Edit `dev.json`**:
-```json
-{
-    "NAME": "NEW_TEST",
-    "DESCRIPTION": "Description of the test",
-    "SEQUENCE": [
-        {"TX": "command1", "RX": "response1"},
-        {"TX": "command2", "RX": "response2"}
-    ]
-}
-```
-
-2. **Test it**:
-```
-SerialCLI> dev devvy
-SerialCLI> dev --run NEW_TEST
-```
-
 #### Improving Serial Communication
 
 1. **Edit `serial_core.py`** - Add new methods to `SerialCommunicator`

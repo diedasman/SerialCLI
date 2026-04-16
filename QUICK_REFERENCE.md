@@ -25,17 +25,6 @@
 | `send "data\r\n"` | Send data to device |
 | `read` | Read available data |
 
-## Developer Mode
-
-| Command | Purpose |
-|---------|---------|
-| `dev devvy` | Enable developer mode (use your key) |
-| `dev --list` | List available tests |
-| `dev --run VERIFICATION` | Run single test |
-| `dev --run VERIFICATION -c 5` | Run test 5 times |
-| `dev --run VERIFICATION -c 5 -t 1000` | Run 5 times, 1s delay |
-| `dev --run-all` | Run all tests |
-| `dev --run-all -t 2000` | Run all with custom delay |
 
 ## General
 
@@ -54,17 +43,6 @@
 3. send "command\r\n"       (send data)
 4. read                     (read response)
 5. disconnect               (close)
-```
-
-### Development Testing
-
-```
-1. connect -p COM3
-2. logging enable logs/test.txt  (optional)
-3. dev devvy
-4. dev --run TEST_NAME
-5. logging disable          (optional)
-6. disconnect
 ```
 
 ### Live Monitoring
@@ -127,7 +105,7 @@ Examples:
 ✅ **Enable logging for debugging** - Creates permanent records
 ✅ **Use `status` frequently** - Check connection and logging state
 ✅ **Exit monitor with Ctrl+C** - No need for separate command
-✅ **dev.json uses `\r\n` line endings** - Match your device protocol
+✅ **Use `\r\n` line endings** - Match your device protocol for send commands
 ✅ **Create `logs/` directory** - Organize your session records
 ✅ **Log files append** - Multiple sessions in one file
 
@@ -148,8 +126,6 @@ Examples:
 SerialCLI/
 ├── cli.py              (main interface)
 ├── serial_core.py      (serial logic)
-├── dev.py              (test runner)
-├── dev.json            (test definitions)
 ├── config.json         (settings)
 ├── logo.txt            (startup image)
 └── logs/               (session logs - create this)
@@ -185,22 +161,6 @@ SerialCLI> read
 
 SerialCLI> disconnect
 ✓ Disconnected successfully
-```
-
-### Example: Run Developer Tests
-
-```bash
-SerialCLI> connect -p COM3
-SerialCLI> dev devvy
-✓ Dev mode enabled
-
-SerialCLI> dev --list
-Available tests (2):
-  [0] VERIFICATION: Verification Checks
-  [1] TRACECATCH: Trace and Catch Checks
-
-SerialCLI> dev --run VERIFICATION
-Test 'VERIFICATION' completed: 4 passed, 0 failed ✓
 ```
 
 ### Example: Monitor with Logging

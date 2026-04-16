@@ -155,73 +155,20 @@ SerialCLI> monitor
 SerialCLI> connect -p COM3 -b 9600
 
 # 2. Enable logging for session record
-SerialCLI> logging enable logs/test_session.txt
+SerialCLI> logging enable logs/session.txt
 
-# 3. Optional: Monitor raw data
-SerialCLI> monitor
-# [Watch device output]
-# Ctrl+C to return to prompt
+# 3. Send commands and watch logging happen
+SerialCLI> send "command1\r\n"
+SerialCLI> read
 
-# 4. Enable dev mode
-SerialCLI> dev devvy
-
-# 5. Run tests (all activity logged)
-SerialCLI> dev --run TRACECATCH
-
-# 6. Disable logging
+# 4. Review the log file
 SerialCLI> logging disable
-
-# 7. Review the log file
-# [Open logs/test_session.txt]
+# [Open logs/session.txt]
 ```
-
-## Trace Sequence Handling
-
-The TRACECATCH test now supports automatic trace extraction. When a test runs with traces defined:
-
-```json
-"TRACES" : [
-    {
-        "KEY" : "[TRACE]",
-        "TRACE_CHAR" : " ",
-        "TRACE_END" : "\n"
-    }
-]
-```
-
-The test runner will:
-1. Send TX commands and wait for RX confirmation
-2. When RX is detected, immediately send the next TX (no delay)
-3. Parse any trace data into the log
-
-### Trace Configuration
-
-| Field | Purpose | Example |
-|-------|---------|---------|
-| `KEY` | String that marks trace start | `"[TRACE]"` |
-| `TRACE_CHAR` | Character after KEY marking data start | `" "` (space) or `":"` |
-| `TRACE_END` | String marking trace end | `"\n"` (newline) |
-
-### Example TRACECATCH Flow
-
-Device sends:
-```
-waking up
-trace was turned ON
-[TRACE] sensor data here
-[DATA]: temperature=42.5
-```
-
-Test executes:
-1. Send `wake\r\n` → Receives `waking up` ✓
-2. Send `trace ON\r\n` → Receives `trace was turned ON` ✓
-3. Parse traces:
-   - Found `[TRACE]` key, extract after space until newline
-   - Found `[DATA]` key, extract after `:` until newline
 
 ## Status Check
 
-View current logging and monitoring status:
+View current logging and connection status:
 
 ```bash
 SerialCLI> status
@@ -233,8 +180,6 @@ Data bits: 8
 Parity: N
 Stop bits: 1
 Timeout: 1.0s
-
-✓ Dev mode: ENABLED
 
 ✓ Logging: ENABLED (logs/session.txt)
 ```
@@ -279,16 +224,18 @@ SerialCLI> monitor
 SerialCLI> disconnect
 ```
 
-### Example 2: Test with Full Logging
+### Example 2: Send Commands with Full Logging
 
 ```bash
 SerialCLI> connect -p COM3
-SerialCLI> logging enable logs/full_test.txt
-SerialCLI> dev devvy
-SerialCLI> dev --run-all
+SerialCLI> logging enable logs/session.txt
+SerialCLI> send "AT+ID\r\n"
+SerialCLI> read
+SerialCLI> send "AT+RST\r\n"
+SerialCLI> read
 SerialCLI> logging disable
 SerialCLI> disconnect
-# Review logs/full_test.txt for results
+# Review logs/session.txt for all TX/RX data
 ```
 
 ### Example 3: Continuous Monitoring with Data Capture

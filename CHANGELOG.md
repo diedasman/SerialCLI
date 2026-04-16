@@ -60,43 +60,6 @@ SerialCLI Log - 2026-04-15 10:30:45
 - Connection/disconnection events
 - Append mode (multiple sessions per file)
 
-### 3. Enhanced Trace Extraction (IMPROVED)
-**In**: TRACECATCH test sequence
-
-Improved trace handling with configurable extraction patterns.
-
-**Old Flow**:
-- Send all commands in sequence
-- Wait for responses
-- Display trace metadata
-
-**New Flow**:
-- Send command → Wait for RX
-- **Immediately** send next command when RX detected (no delay)
-- Extract trace data using KEY → TRACE_CHAR → TRACE_END pattern
-- Log extracted traces
-
-**Example dev.json**:
-```json
-"TRACES" : [
-    {
-        "KEY" : "[TRACE]",
-        "TRACE_CHAR" : " ",
-        "TRACE_END" : "\n"
-    },
-    {
-        "KEY" : "[DATA]",
-        "TRACE_CHAR" : ":",
-        "TRACE_END" : "\n"
-    }
-]
-```
-
-### 4. Improved Test Sequence Execution (IMPROVED)
-- **Immediate TX on RX**: Next command sends immediately when expected response arrives
-- **Reduced Latency**: Timing reduced from 100ms to 50ms for tighter control
-- **Better Logging**: All test steps logged when logging is enabled
-
 ## Technical Improvements
 
 ### serial_core.py
@@ -115,18 +78,6 @@ Improved trace handling with configurable extraction patterns.
 #### Properties
 - `log_enabled` - Current logging status
 - `log_file` - Path to active log file
-
-### dev.py
-
-#### New Methods
-- `_extract_trace_data(data, trace_config)` - Extract traced data patterns
-
-#### Enhanced Methods
-- `_execute_test_sequence()` - 
-  - Removed fixed delay loop, now event-driven
-  - Immediate next TX on RX detection
-  - Trace metadata display
-  - Better error reporting
 
 ### cli.py
 
@@ -168,42 +119,12 @@ SerialCLI> monitor
 Serial Monitor Active (Ctrl+C to exit)
 ======================================================================
 
-Device ready
-Temperature: 25.5°C
-Status: OK
 [... more data ...]
 ^C
 SerialCLI>
 ```
 
-### Example 2: Test with Full Logging
-
-```bash
-SerialCLI> connect -p COM3
-SerialCLI> logging enable logs/test_run.txt
-✓ Logging enabled: logs/test_run.txt
-
-SerialCLI> dev devvy
-✓ Dev mode enabled
-
-SerialCLI> dev --run TRACECATCH
-Test 'TRACECATCH' started...
-  State 0: TX → 'wake\r\n'
-  State 0: RX ✓ 'waking up'
-  State 1: TX → 'trace ON\r\n'
-  State 1: RX ✓ 'trace was turned ON'
-  
-  Traces (2 items detected):
-    [0] KEY: '[TRACE]' | CHAR: ' ' | END: '\n'
-    [1] KEY: '[DATA]' | CHAR: ':' | END: '\n'
-
-Test 'TRACECATCH' completed: 2 passed, 0 failed ✓
-
-SerialCLI> logging disable
-✓ Logging disabled
-```
-
-### Example 3: Long Session Monitoring
+### Example 2: Long Session Monitoring
 
 ```bash
 # Start fresh session with logging
