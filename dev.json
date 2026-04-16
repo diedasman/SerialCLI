@@ -12,7 +12,7 @@
             "DESCRIPTION" : "Verification Checks",
             "SEQUENCE" : [
                 {
-                    "TX" : "+++",
+                    "TX" : "wake\r\n",
                     "RX" : "---"
                 },
                 {
