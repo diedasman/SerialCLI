@@ -1,0 +1,17 @@
+{
+    "SETTINGS" : {
+        "PORT" : "",
+        "BAUD" : "",
+        "TERMINATION" : {
+            "FLOW_CONTROL" : "DISABLED",
+            "DATA_BITS" : "",
+            "PARITY" : "",
+            "STOP_BITS" : ""
+        },
+        "TIMEOUT" : "",
+        "LOGGING" : {
+            "ENABLED" : false,
+            "FILE_PATH" : ""
+        }
+    }
+}

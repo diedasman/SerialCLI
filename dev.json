@@ -1,0 +1,59 @@
+{
+    "DEV_KEY" : "devvy",
+    "COMMANDS" : {
+        "wake"  : "wakeup",
+        "reset" : "reset",
+        "KEY1"  : "string",
+        "KEY2"  : "string"
+    },
+    "TESTS" : [
+         {
+            "NAME" : "VERIFICATION",
+            "DESCRIPTION" : "Verification Checks",
+            "SEQUENCE" : [
+                {
+                    "TX" : "+++",
+                    "RX" : "---"
+                },
+                {
+                    "TX" : "KEY1\r\n",
+                    "RX" : "string"
+                },
+                {
+                    "TX" : "KEY2\r\n",
+                    "RX" : "string"
+                },
+                {
+                    "TX" : "reset\r\n",
+                    "RX" : "resetting"
+                }
+            ]
+         },
+         {
+            "NAME" : "TRACECATCH",
+            "DESCRIPTION" : "Trace and Catch Checks",
+            "SEQUENCE" : [
+                {
+                    "TX" : "wake\r\n",
+                    "RX" : "waking up"
+                },
+                {
+                    "TX" : "trace ON\r\n",
+                    "RX" : "trace was turned ON"
+                }
+            ],
+            "TRACES" : [
+                {
+                    "KEY" : "[TRACE]",
+                    "TRACE_CHAR" : " ",
+                    "TRACE_END" : "\n"
+                },
+                {
+                    "KEY" : "[DATA]",
+                    "TRACE_CHAR" : ":",
+                    "TRACE_END" : "\n"
+                }
+            ]
+         }
+     ]
+}

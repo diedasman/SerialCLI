@@ -1,0 +1,4 @@
+# Requirements for SerialCLI
+# Install with: pip install -r requirements.txt
+
+pyserial>=3.5
