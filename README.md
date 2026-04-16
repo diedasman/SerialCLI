@@ -49,6 +49,8 @@ A command-line interface for serial device communication via USB. Easily send an
 1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/SerialCLI.git
+   ```
+   ```
    cd SerialCLI
    ```
 
@@ -56,7 +58,6 @@ A command-line interface for serial device communication via USB. Easily send an
    ```bash
    pip install -e .
    ```
-```
 
 ## Usage
 
