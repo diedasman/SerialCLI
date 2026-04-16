@@ -10,6 +10,13 @@ from pathlib import Path
 from typing import List, Dict
 from serial_core import SerialCommunicator
 from dev import DevTestRunner
+from rich.console import Console # type: ignore
+from rich.panel import Panel # type: ignore
+from rich.table import Table # type: ignore
+from rich.text import Text # type: ignore
+from rich.syntax import Syntax # type: ignore
+
+console = Console()
 
 
 class SerialCLI:
@@ -33,64 +40,59 @@ class SerialCLI:
 
     def print_help(self) -> None:
         """Display help menu with all available commands."""
-        help_text = """
-╔════════════════════════════════════════════════════════════════╗
-║                    SerialCLI - Commands Help                   ║
-╚════════════════════════════════════════════════════════════════╝
+        help_text = """[bold cyan]BASIC COMMANDS:[/bold cyan]
+  [yellow]help[/yellow]                       - Display this help menu
+  [yellow]exit, quit[/yellow]                 - Exit the application
+  [yellow]status[/yellow]                     - Show connection status and info
 
-BASIC COMMANDS:
-  help                       - Display this help menu
-  exit, quit                 - Exit the application
-  status                     - Show connection status and info
+[bold cyan]CONNECTION COMMANDS:[/bold cyan]
+  [yellow]connect --list[/yellow]             - List all available serial ports
+  [yellow]connect -p <port>[/yellow]         - Connect to a port (using default settings)
+  [yellow]connect -p <port> -b <baud> -dat <bits> -par <parity> -stop <bits> -t <timeout>[/yellow]
+    [green]port:[/green]     Port name (e.g., COM3 or /dev/ttyUSB0)
+    [green]baud:[/green]     Baudrate (default: 9600)
+    [green]bits:[/green]     Data bits (default: 8)
+    [green]parity:[/green]   N=None, E=Even, O=Odd (default: N)
+    [green]bits:[/green]     Stop bits (default: 1)
+    [green]timeout:[/green]  Timeout in seconds (default: 1.0)
 
-CONNECTION COMMANDS:
-  connect --list             - List all available serial ports
-  connect -p <port>         - Connect to a port (using default settings)
-  connect -p <port> -b <baud> -dat <bits> -par <parity> -stop <bits> -t <timeout>
-    port:     Port name (e.g., COM3 or /dev/ttyUSB0)
-    baud:     Baudrate (default: 9600)
-    bits:     Data bits (default: 8)
-    parity:   N=None, E=Even, O=Odd (default: N)
-    bits:     Stop bits (default: 1)
-    timeout:  Timeout in seconds (default: 1.0)
+  [yellow]disconnect[/yellow]                 - Close the current serial connection
 
-  disconnect                 - Close the current serial connection
+[bold cyan]MONITOR & LOGGING:[/bold cyan]
+  [yellow]monitor[/yellow]                    - Display real-time serial data stream (Ctrl+C to exit)
+  [yellow]logging enable <filepath>[/yellow]  - Enable logging to file
+  [yellow]logging disable[/yellow]            - Disable logging
 
-MONITOR & LOGGING:
-  monitor                    - Display real-time serial data stream (Ctrl+C to exit)
-  logging enable <filepath>  - Enable logging to file
-  logging disable            - Disable logging
+[bold cyan]MANUAL COMMUNICATION:[/bold cyan]
+  [yellow]send <data>[/yellow]                - Send data to the serial device
+  [yellow]read[/yellow]                       - Read available data from the device
 
-MANUAL COMMUNICATION:
-  send <data>                - Send data to the serial device
-  read                       - Read available data from the device
+[bold cyan]DEVELOPER COMMANDS[/bold cyan] (requires dev key):
+  [yellow]dev <key>[/yellow]                  - Enter developer key to enable dev mode
+  [yellow]dev --list[/yellow]                 - List all available tests
+  [yellow]dev --run <test_name>[/yellow]      - Run a specific test
+    [green]-c <count>[/green]               - Number of times to run the test (default: 1)
+    [green]-t <delay_ms>[/green]            - Delay between runs in milliseconds (default: 0)
+  [yellow]dev --run-all[/yellow]              - Run all tests
+    [green]-t <delay_ms>[/green]            - Delay between tests in milliseconds (default: 500)
 
-DEVELOPER COMMANDS (requires dev key):
-  dev <key>                  - Enter developer key to enable dev mode
-  dev --list                 - List all available tests
-  dev --run <test_name>      - Run a specific test
-    -c <count>               - Number of times to run the test (default: 1)
-    -t <delay_ms>            - Delay between runs in milliseconds (default: 0)
-  dev --run-all              - Run all tests
-    -t <delay_ms>            - Delay between tests in milliseconds (default: 500)
-
-EXAMPLES:
-  connect --list
-  connect -p COM3 -b 115200
-  logging enable logs/session.txt
-  monitor
-  dev devvy
-  dev --run VERIFICATION -c 2 -t 1000
-  send "hello"
-  read
-
+[bold cyan]EXAMPLES:[/bold cyan]
+  [magenta]connect --list[/magenta]
+  [magenta]connect -p COM3 -b 115200[/magenta]
+  [magenta]logging enable logs/session.txt[/magenta]
+  [magenta]monitor[/magenta]
+  [magenta]dev devvy[/magenta]
+  [magenta]dev --run VERIFICATION -c 2 -t 1000[/magenta]
+  [magenta]send "hello"[/magenta]
+  [magenta]read[/magenta]
 """
-        print(help_text)
+        panel = Panel(help_text, title="[bold cyan]SerialCLI - Commands Help[/bold cyan]", style="bold blue")
+        console.print(panel)
 
     def parse_connect_command(self, args: List[str]) -> None:
         """Parse and execute connect command."""
         if not args:
-            print("Usage: connect --list OR connect -p <port> [options]")
+            console.print("[red]Usage:[/red] connect --list OR connect -p <port> [options]")
             return
 
         # Handle port listing
@@ -102,7 +104,7 @@ EXAMPLES:
         params = self._parse_params(args)
 
         if "p" not in params:
-            print("Error: Port (-p) is required")
+            console.print("[bold red]Error:[/bold red] Port (-p) is required")
             return
 
         port = params["p"]
@@ -121,29 +123,35 @@ EXAMPLES:
             timeout=timeout
         )
 
-        print(f"{'✓' if success else '✗'} {message}")
+        if success:
+            console.print(f"[bold green]✓ {message}[/bold green]")
+        else:
+            console.print(f"[bold red]✗ {message}[/bold red]")
 
     def parse_dev_command(self, args: List[str]) -> None:
         """Parse and execute dev command."""
         if not args:
-            print("Usage: dev <key> OR dev --list OR dev --run <test_name> [options]")
+            console.print("[red]Usage:[/red] dev <key> OR dev --list OR dev --run <test_name> [options]")
             return
 
         # Handle dev key entry
         if args[0] not in ["--list", "--run", "--run-all"]:
             success, message = self.dev_runner.set_dev_key(args[0])
-            print(f"{'✓' if success else '✗'} {message}")
+            if success:
+                console.print(f"[bold green]✓ {message}[/bold green]")
+            else:
+                console.print(f"[bold red]✗ {message}[/bold red]")
             return
 
         # List tests
         if args[0] == "--list":
             success, tests = self.dev_runner.list_tests()
             if success:
-                print(f"\nAvailable tests ({len(tests)}):")
+                console.print(f"\n[bold cyan]Available tests ({len(tests)}):[/bold cyan]")
                 for idx, test in enumerate(tests):
-                    print(f"  [{idx}] {test.get('NAME', 'Unknown')}: {test.get('DESCRIPTION', 'N/A')}")
+                    console.print(f"  [yellow][{idx}][/yellow] [cyan]{test.get('NAME', 'Unknown')}[/cyan]: [green]{test.get('DESCRIPTION', 'N/A')}[/green]")
             else:
-                print(f"✗ Error: {tests}")
+                console.print(f"[bold red]✗ Error: {tests}[/bold red]")
             return
 
         # Run all tests
@@ -151,7 +159,7 @@ EXAMPLES:
             params = self._parse_params(args[1:])
             delay_ms = int(params.get("t", "500"))
             success, result = self.dev_runner.run_all_tests(delay_ms=delay_ms, verbose=True)
-            print(result)
+            console.print(result)
             return
 
         # Run specific test
@@ -167,35 +175,41 @@ EXAMPLES:
                 delay_ms=delay_ms,
                 verbose=True
             )
-            print(result)
+            console.print(result)
             return
 
-        print("Invalid dev command syntax")
+        console.print("[bold red]Invalid dev command syntax[/bold red]")
 
     def parse_send_command(self, args: List[str]) -> None:
         """Parse and execute send command."""
         if not args:
-            print("Usage: send <data>")
+            console.print("[red]Usage:[/red] send <data>")
             return
 
         data = " ".join(args)
         success, message = self.serial_comm.send(data)
-        print(f"{'✓' if success else '✗'} {message}")
+        if success:
+            console.print(f"[bold green]✓ {message}[/bold green]")
+        else:
+            console.print(f"[bold red]✗ {message}[/bold red]")
 
     def _list_ports(self) -> None:
         """List all available serial ports."""
         ports = self.serial_comm.list_ports()
         if not ports:
-            print("No serial ports found")
+            console.print("[yellow]No serial ports found[/yellow]")
             return
 
-        print("\nAvailable Serial Ports:")
-        print("─" * 70)
+        table = Table(title="[bold cyan]Available Serial Ports[/bold cyan]", show_header=True, header_style="bold cyan")
+        table.add_column("Port", style="yellow")
+        table.add_column("Description", style="green")
+        table.add_column("Hardware ID", style="magenta")
+
         for port, description, hwid in ports:
-            print(f"  Port: {port}")
-            print(f"    Description: {description}")
-            print(f"    Hardware ID: {hwid}")
-            print()
+            table.add_row(port, description, hwid)
+
+        console.print("\n")
+        console.print(table)
 
     def _parse_params(self, args: List[str]) -> Dict[str, str]:
         """Parse command-line parameters in -key value format."""
@@ -216,62 +230,80 @@ EXAMPLES:
 
     def show_status(self) -> None:
         """Display current connection status."""
+        console.print()
         if self.serial_comm.is_connected:
-            print("\n✓ Connected")
-            print(self.serial_comm.get_connection_info())
+            console.print("[bold green]✓ Connected[/bold green]")
+            console.print(f"[cyan]{self.serial_comm.get_connection_info()}[/cyan]")
         else:
-            print("\n✗ Not connected to any port")
+            console.print("[bold red]✗ Not connected to any port[/bold red]")
 
+        console.print()
         if self.dev_runner.is_dev_enabled():
-            print("\n✓ Dev mode: ENABLED")
+            console.print("[bold green]✓ Dev mode: ENABLED[/bold green]")
         else:
-            print("\n✗ Dev mode: DISABLED")
+            console.print("[bold yellow]✗ Dev mode: DISABLED[/bold yellow]")
 
+        console.print()
         if self.serial_comm.log_enabled:
-            print(f"\n✓ Logging: ENABLED ({self.serial_comm.log_file})")
+            console.print(f"[bold green]✓ Logging: ENABLED[/bold green] [cyan]({self.serial_comm.log_file})[/cyan]")
         else:
-            print("\n✗ Logging: DISABLED")
+            console.print("[bold yellow]✗ Logging: DISABLED[/bold yellow]")
 
     def start_monitor(self) -> None:
         """Start real-time serial monitor."""
         if not self.serial_comm.is_connected:
-            print("✗ Not connected to any port")
+            console.print("[bold red]✗ Not connected to any port[/bold red]")
             return
 
-        print("\n" + "="*70)
-        print("Serial Monitor Active (Ctrl+C to exit)")
-        print("="*70 + "\n")
+        monitor_panel = Panel(
+            "Press [bold]Ctrl+C[/bold] to exit",
+            title="[bold cyan]Serial Monitor Active[/bold cyan]",
+            style="bold blue"
+        )
+        console.print("\n")
+        console.print(monitor_panel)
+        console.print()
 
         try:
             while True:
                 success, data = self.serial_comm.receive(timeout=0.1)
                 if success and data:
-                    print(data, end='', flush=True)
+                    console.print(data, end='', soft_wrap=True)
         except KeyboardInterrupt:
-            print("\n\n" + "="*70)
-            print("Serial Monitor Stopped")
-            print("="*70)
+            console.print("\n")
+            stopped_panel = Panel(
+                "Monitor stopped",
+                title="[bold cyan]Serial Monitor[/bold cyan]",
+                style="bold blue"
+            )
+            console.print(stopped_panel)
 
     def parse_logging_command(self, args: List[str]) -> None:
         """Parse and execute logging command."""
         if not args:
-            print("Usage: logging enable <filepath> OR logging disable")
+            console.print("[red]Usage:[/red] logging enable <filepath> OR logging disable")
             return
 
         if args[0] == "enable":
             if len(args) < 2:
-                print("Usage: logging enable <filepath>")
+                console.print("[red]Usage:[/red] logging enable <filepath>")
                 return
             filepath = args[1]
             success, message = self.serial_comm.enable_logging(filepath)
-            print(f"{'✓' if success else '✗'} {message}")
+            if success:
+                console.print(f"[bold green]✓ {message}[/bold green]")
+            else:
+                console.print(f"[bold red]✗ {message}[/bold red]")
 
         elif args[0] == "disable":
             success, message = self.serial_comm.disable_logging()
-            print(f"{'✓' if success else '✗'} {message}")
+            if success:
+                console.print(f"[bold green]✓ {message}[/bold green]")
+            else:
+                console.print(f"[bold red]✗ {message}[/bold red]")
 
         else:
-            print("Usage: logging enable <filepath> OR logging disable")
+            console.print("[red]Usage:[/red] logging enable <filepath> OR logging disable")
 
     def process_command(self, user_input: str) -> None:
         """
@@ -289,7 +321,7 @@ EXAMPLES:
 
         if command in ["exit", "quit"]:
             self.running = False
-            print("Goodbye!")
+            console.print("[bold magenta]Goodbye![/bold magenta]")
             return
 
         elif command == "help":
@@ -303,7 +335,10 @@ EXAMPLES:
 
         elif command == "disconnect":
             success, message = self.serial_comm.disconnect()
-            print(f"{'✓' if success else '✗'} {message}")
+            if success:
+                console.print(f"[bold green]✓ {message}[/bold green]")
+            else:
+                console.print(f"[bold red]✗ {message}[/bold red]")
 
         elif command == "monitor":
             self.start_monitor()
@@ -319,31 +354,37 @@ EXAMPLES:
 
         elif command == "read":
             if not self.serial_comm.is_connected:
-                print("✗ Not connected")
+                console.print("[bold red]✗ Not connected[/bold red]")
                 return
             success, data = self.serial_comm.receive()
             if success:
-                print(f"✓ Received: {repr(data)}")
+                console.print(f"[bold green]✓ Received:[/bold green] [cyan]{repr(data)}[/cyan]")
             else:
-                print(f"✗ No data or error: {data}")
+                console.print(f"[bold red]✗ No data or error: {data}[/bold red]")
 
         else:
-            print(f"Unknown command: {command}")
-            print("Type 'help' for available commands")
+            console.print(f"[bold red]Unknown command:[/bold red] [yellow]{command}[/yellow]")
+            console.print("Type [cyan]'help'[/cyan] for available commands")
 
     def run(self) -> None:
         """Run the interactive CLI loop."""
-        print("\nType 'help' for available commands or 'exit' to quit\n")
+        tip_panel = Panel(
+            "Type [cyan]'help'[/cyan] for available commands or [cyan]'exit'[/cyan] to quit",
+            style="bold green"
+        )
+        console.print("")
+        console.print(tip_panel)
+        console.print()
 
         while self.running:
             try:
                 user_input = input("SerialCLI> ")
                 self.process_command(user_input)
             except KeyboardInterrupt:
-                print("\n\nInterrupted by user")
+                console.print("\n[bold yellow]Interrupted by user[/bold yellow]")
                 self.running = False
             except Exception as e:
-                print(f"Error: {str(e)}")
+                console.print(f"[bold red]Error: {str(e)}[/bold red]")
 
     def cleanup(self) -> None:
         """Clean up resources before exit."""
@@ -351,8 +392,37 @@ EXAMPLES:
             self.serial_comm.disconnect()
 
 
+def print_logo_and_welcome():
+    """Print the SerialCLI logo and welcome message."""
+    app_dir = Path(__file__).parent
+    logo_file = app_dir / "logo.txt"
+
+    # Print logo
+    try:
+        with open(logo_file, 'r') as f:
+            console.print(f"[bold cyan]{f.read()}[/bold cyan]")
+    except FileNotFoundError:
+        console.print("[bold cyan]SerialCLI[/bold cyan]")
+
+    # Print welcome message with Rich panel
+    welcome_text = """[bold magenta]📝 TIPS:[/bold magenta]
+[cyan]• Type 'help' for a list of available commands[/cyan]
+[cyan]• Use 'connect --list' to see available serial ports[/cyan]
+[cyan]• Use 'dev <key>' to enable developer mode[/cyan]
+[cyan]• Use 'status' to check connection and dev mode status[/cyan]"""
+    
+    panel = Panel(
+        welcome_text,
+        title="[bold cyan]SerialCLI - Serial Device Communication Tool[/bold cyan]",
+        style="bold blue"
+    )
+    console.print(panel)
+
+
 def main() -> int:
     """Main entry point for SerialCLI."""
+    print_logo_and_welcome()
+    
     # Get the directory where this script is located
     app_dir = Path(__file__).parent.absolute()
 

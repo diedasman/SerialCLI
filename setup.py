@@ -31,13 +31,14 @@ setup(
     # Entry point for the 'SerialCLI' command
     entry_points={
         'console_scripts': [
-            'SerialCLI=__main__:main',
+            'SerialCLI=cli:main',
         ],
     },
     
     # Dependencies
     install_requires=[
         "pyserial>=3.5",
+        "rich>=13.0.0",
     ],
     
     # Python version requirement
