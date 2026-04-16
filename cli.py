@@ -9,7 +9,6 @@ import shlex
 from pathlib import Path
 from typing import List, Dict
 from serial_core import SerialCommunicator
-from dev import DevTestRunner
 from rich.console import Console # type: ignore
 from rich.panel import Panel # type: ignore
 from rich.table import Table # type: ignore
@@ -30,12 +29,10 @@ class SerialCLI:
         Initialize the CLI application.
         
         Args:
-            app_dir: Directory where dev.json and other config files are located
+            app_dir: Directory where configuration files are located
         """
         self.app_dir = Path(app_dir)
         self.serial_comm = SerialCommunicator()
-        self.dev_runner = DevTestRunner(str(self.app_dir / "dev.json"))
-        self.dev_runner.set_serial_communicator(self.serial_comm)
         self.running = True
 
     def print_help(self) -> None:
@@ -67,22 +64,13 @@ class SerialCLI:
   [yellow]send <data>[/yellow]                - Send data to the serial device
   [yellow]read[/yellow]                       - Read available data from the device
 
-[bold cyan]DEVELOPER COMMANDS[/bold cyan] (requires dev key):
-  [yellow]dev <key>[/yellow]                  - Enter developer key to enable dev mode
-  [yellow]dev --list[/yellow]                 - List all available tests
-  [yellow]dev --run <test_name>[/yellow]      - Run a specific test
-    [green]-c <count>[/green]               - Number of times to run the test (default: 1)
-    [green]-t <delay_ms>[/green]            - Delay between runs in milliseconds (default: 0)
-  [yellow]dev --run-all[/yellow]              - Run all tests
-    [green]-t <delay_ms>[/green]            - Delay between tests in milliseconds (default: 500)
+
 
 [bold cyan]EXAMPLES:[/bold cyan]
   [magenta]connect --list[/magenta]
   [magenta]connect -p COM3 -b 115200[/magenta]
   [magenta]logging enable logs/session.txt[/magenta]
   [magenta]monitor[/magenta]
-  [magenta]dev devvy[/magenta]
-  [magenta]dev --run VERIFICATION -c 2 -t 1000[/magenta]
   [magenta]send "hello"[/magenta]
   [magenta]read[/magenta]
 """
@@ -128,57 +116,7 @@ class SerialCLI:
         else:
             console.print(f"[bold red]✗ {message}[/bold red]")
 
-    def parse_dev_command(self, args: List[str]) -> None:
-        """Parse and execute dev command."""
-        if not args:
-            console.print("[red]Usage:[/red] dev <key> OR dev --list OR dev --run <test_name> [options]")
-            return
 
-        # Handle dev key entry
-        if args[0] not in ["--list", "--run", "--run-all"]:
-            success, message = self.dev_runner.set_dev_key(args[0])
-            if success:
-                console.print(f"[bold green]✓ {message}[/bold green]")
-            else:
-                console.print(f"[bold red]✗ {message}[/bold red]")
-            return
-
-        # List tests
-        if args[0] == "--list":
-            success, tests = self.dev_runner.list_tests()
-            if success:
-                console.print(f"\n[bold cyan]Available tests ({len(tests)}):[/bold cyan]")
-                for idx, test in enumerate(tests):
-                    console.print(f"  [yellow][{idx}][/yellow] [cyan]{test.get('NAME', 'Unknown')}[/cyan]: [green]{test.get('DESCRIPTION', 'N/A')}[/green]")
-            else:
-                console.print(f"[bold red]✗ Error: {tests}[/bold red]")
-            return
-
-        # Run all tests
-        if args[0] == "--run-all":
-            params = self._parse_params(args[1:])
-            delay_ms = int(params.get("t", "500"))
-            success, result = self.dev_runner.run_all_tests(delay_ms=delay_ms, verbose=True)
-            console.print(result)
-            return
-
-        # Run specific test
-        if args[0] == "--run" and len(args) > 1:
-            test_name = args[1]
-            params = self._parse_params(args[2:])
-            count = int(params.get("c", "1"))
-            delay_ms = int(params.get("t", "0"))
-
-            success, result = self.dev_runner.run_test(
-                test_name=test_name,
-                count=count,
-                delay_ms=delay_ms,
-                verbose=True
-            )
-            console.print(result)
-            return
-
-        console.print("[bold red]Invalid dev command syntax[/bold red]")
 
     def parse_send_command(self, args: List[str]) -> None:
         """Parse and execute send command."""
@@ -236,12 +174,6 @@ class SerialCLI:
             console.print(f"[cyan]{self.serial_comm.get_connection_info()}[/cyan]")
         else:
             console.print("[bold red]✗ Not connected to any port[/bold red]")
-
-        console.print()
-        if self.dev_runner.is_dev_enabled():
-            console.print("[bold green]✓ Dev mode: ENABLED[/bold green]")
-        else:
-            console.print("[bold yellow]✗ Dev mode: DISABLED[/bold yellow]")
 
         console.print()
         if self.serial_comm.log_enabled:
@@ -346,9 +278,6 @@ class SerialCLI:
         elif command == "logging":
             self.parse_logging_command(args)
 
-        elif command == "dev":
-            self.parse_dev_command(args)
-
         elif command == "send":
             self.parse_send_command(args)
 
@@ -408,8 +337,7 @@ def print_logo_and_welcome():
     welcome_text = """[bold magenta]📝 TIPS:[/bold magenta]
 [cyan]• Type 'help' for a list of available commands[/cyan]
 [cyan]• Use 'connect --list' to see available serial ports[/cyan]
-[cyan]• Use 'dev <key>' to enable developer mode[/cyan]
-[cyan]• Use 'status' to check connection and dev mode status[/cyan]"""
+[cyan]• Use 'status' to check connection status[/cyan]"""
     
     panel = Panel(
         welcome_text,

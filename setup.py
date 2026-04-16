@@ -3,7 +3,7 @@
 # Installation script for SerialCLI package.
 # Allows users to install SerialCLI globally using: pip install -e .
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages # type: ignore
 from pathlib import Path
 
 # Read README if available
@@ -25,8 +25,7 @@ setup(
     license="MIT",
     
     # Package discovery
-    packages=find_packages(where="."),
-    py_modules=["cli", "serial_core", "dev", "__main__"],
+    py_modules=["cli", "serial_core", "__main__"],
     
     # Entry point for the 'SerialCLI' command
     entry_points={
@@ -46,7 +45,7 @@ setup(
     
     # Include additional files
     package_data={
-        '': ['logo.txt', 'config.json', 'dev.json'],
+        '': ['logo.txt', 'config.json'],
     },
     include_package_data=True,
     
