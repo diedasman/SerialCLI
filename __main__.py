@@ -1,4 +1,3 @@
-# __main__.py
 # Entry point for SerialCLI when run as a package.
 # Displays logo and welcome message, then launches the CLI.
 
